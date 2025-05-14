@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rent My Camper</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .hero-section {
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('path-to-your-hero-image.jpg');
+            background-size: cover;
+            background-position: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+    <!-- Header -->
+    <header class="bg-white shadow">
+        <nav class="container mx-auto p-6 flex justify-between items-center">
+            <h1 class="text-3xl font-bold text-blue-600">Rent My Camper</h1>
+            <div>
+                <a href="#about" class="text-lg mx-4 hover:text-blue-600">About</a>
+                <a href="#reserve" class="text-lg mx-4 hover:text-blue-600">Reserve</a>
+                <a href="#gallery" class="text-lg mx-4 hover:text-blue-600">Gallery</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero-section h-[600px] flex items-center justify-center text-center text-white">
+        <div>
+            <h2 class="text-5xl font-bold mb-4">Adventure Awaits in Our Cozy Camper</h2>
+            <p class="text-xl mb-6">Book your getaway today for just $50/night!</p>
+            <a href="#reserve" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">Reserve Now</a>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="container mx-auto py-16">
+        <h2 class="text-4xl font-bold text-center mb-8">About the Camper</h2>
+        <div class="flex flex-col md:flex-row items-center">
+            <div class="md:w-1/2 p-6">
+                <p class="text-lg leading-relaxed">
+                    Our 6x10 "no build" camper is designed for those who love the essentials without the fuss. Equipped with a 200-watt solar panel and a 110AH battery, it powers two USB fans, a 32" TV, and interior lights for a comfortable stay. You'll also find an extension cord for shore power, a 10-port 15Amp power strip, and multiple USB ports for all your charging needs. Perfect for a minimalist adventure, this camper uses a 2" ball trailer hitch and is ready to take you to your next destination.
+                </p>
+            </div>
+            <div class="md:w-1/2 p-6">
+                <img src="camperexterior.jpg" alt="Camper Exterior" class="rounded-lg shadow-lg w-full">
+            </div>
+        </div>
+    </section>
+
+    <!-- Reservation Section -->
+    <section id="reserve" class="bg-white py-16">
+        <div class="container mx-auto">
+            <h2 class="text-4xl font-bold text-center mb-8">Reserve Your Dates</h2>
+            <div class="max-w-lg mx-auto p-6 bg-gray-50 rounded-lg shadow-lg">
+                <p class="text-lg mb-4 text-center">Rental Rate: $50/night (1pm to 1pm)</p>
+                <div class="mb-6">
+                    <label for="dates" class="block text-lg font-semibold mb-2">Select Your Dates:</label>
+                    <input type="text" id="dates" class="w-full p-3 border rounded-lg" placeholder="Pick your dates">
+                </div>
+                <div id="total-cost" class="text-lg font-semibold mb-4 text-center"></div>
+                <button onclick="calculateTotal()" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">Calculate & Reserve</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Gallery Section -->
+    <section id="gallery" class="container mx-auto py-16">
+        <h2 class="text-4xl font-bold text-center mb-8">Gallery</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <img src="camperexterior.jpg" alt="Camper Exterior" class="rounded-lg shadow-lg w-full">
+            <img src="dogs.jpg" alt="Dogs Inside Camper" class="rounded-lg shadow-lg w-full">
+            <img src="dogswater.jpg" alt="Dogs in Water" class="rounded-lg shadow-lg w-full">
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2025 Rent My Camper. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Initialize Flatpickr for date range selection
+        flatpickr("#dates", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            minDate: "today",
+            onChange: function(selectedDates) {
+                if (selectedDates.length === 2) {
+                    calculateTotal(selectedDates);
+                }
+            }
+        });
+
+        function calculateTotal(selectedDates = null) {
+            if (!selectedDates) {
+                const datesInput = document.getElementById("dates").value;
+                if (!datesInput.includes(" to ")) return;
+                selectedDates = datesInput.split(" to ").map(date => new Date(date));
+            }
+
+            const startDate = new Date(selectedDates[0]);
+            const endDate = new Date(selectedDates[1]);
+            const timeDiff = endDate - startDate;
+            const nights = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+            const ratePerNight = 50;
+            const totalCost = nights * ratePerNight;
+
+            document.getElementById("total-cost").innerText = `Total Cost: $${totalCost} for ${nights} night${nights > 1 ? 's' : ''}`;
+            return totalCost;
+        }
+    </script>
+</body>
+</html>
