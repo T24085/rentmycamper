@@ -12,7 +12,7 @@
             font-family: 'Inter', sans-serif;
         }
         .hero-section {
-            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('path-to-your-hero-image.jpg');
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('camper.PNG');
             background-size: cover;
             background-position: center;
         }
@@ -61,12 +61,22 @@
             <h2 class="text-4xl font-bold text-center mb-8">Reserve Your Dates</h2>
             <div class="max-w-lg mx-auto p-6 bg-gray-50 rounded-lg shadow-lg">
                 <p class="text-lg mb-4 text-center">Rental Rate: $50/night (1pm to 1pm)</p>
-                <div class="mb-6">
-                    <label for="dates" class="block text-lg font-semibold mb-2">Select Your Dates:</label>
-                    <input type="text" id="dates" class="w-full p-3 border rounded-lg" placeholder="Pick your dates">
-                </div>
-                <div id="total-cost" class="text-lg font-semibold mb-4 text-center"></div>
-                <button onclick="calculateTotal()" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">Calculate & Reserve</button>
+                <form id="reservation-form" onsubmit="handleReservation(event)">
+                    <div class="mb-6">
+                        <label for="dates" class="block text-lg font-semibold mb-2">Select Your Dates:</label>
+                        <input type="text" id="dates" name="dates" class="w-full p-3 border rounded-lg" placeholder="Pick your dates" required>
+                    </div>
+                    <div class="mb-6">
+                        <label for="name" class="block text-lg font-semibold mb-2">Your Name:</label>
+                        <input type="text" id="name" name="name" class="w-full p-3 border rounded-lg" placeholder="Enter your name" required>
+                    </div>
+                    <div class="mb-6">
+                        <label for="email" class="block text-lg font-semibold mb-2">Your Email:</label>
+                        <input type="email" id="email" name="email" class="w-full p-3 border rounded-lg" placeholder="Enter your email" required>
+                    </div>
+                    <div id="total-cost" class="text-lg font-semibold mb-4 text-center"></div>
+                    <button type="submit" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">Calculate & Reserve</button>
+                </form>
             </div>
         </div>
     </section>
@@ -84,7 +94,7 @@
     <!-- Footer -->
     <footer class="bg-gray-800 text-white py-6">
         <div class="container mx-auto text-center">
-            <p>&copy; 2025 Rent My Camper. All rights reserved.</p>
+            <p>© 2025 Rent My Camper. All rights reserved.</p>
         </div>
     </footer>
 
@@ -96,18 +106,34 @@
             minDate: "today",
             onChange: function(selectedDates) {
                 if (selectedDates.length === 2) {
-                    calculateTotal(selectedDates);
+                    checkAvailability(selectedDates);
                 }
             }
         });
 
-        function calculateTotal(selectedDates = null) {
-            if (!selectedDates) {
-                const datesInput = document.getElementById("dates").value;
-                if (!datesInput.includes(" to ")) return;
-                selectedDates = datesInput.split(" to ").map(date => new Date(date));
-            }
+        async function checkAvailability(selectedDates) {
+            const startDate = selectedDates[0].toISOString().split('T')[0];
+            const endDate = selectedDates[1].toISOString().split('T')[0];
 
+            try {
+                const response = await fetch('http://localhost:3000/check-availability', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ startDate, endDate })
+                });
+                const result = await response.json();
+                if (result.available) {
+                    calculateTotal(selectedDates);
+                } else {
+                    document.getElementById("total-cost").innerText = "Dates are already booked.";
+                }
+            } catch (error) {
+                console.error('Error checking availability:', error);
+                document.getElementById("total-cost").innerText = "Error checking availability.";
+            }
+        }
+
+        function calculateTotal(selectedDates) {
             const startDate = new Date(selectedDates[0]);
             const endDate = new Date(selectedDates[1]);
             const timeDiff = endDate - startDate;
@@ -116,7 +142,47 @@
             const totalCost = nights * ratePerNight;
 
             document.getElementById("total-cost").innerText = `Total Cost: $${totalCost} for ${nights} night${nights > 1 ? 's' : ''}`;
-            return totalCost;
+            return { totalCost, nights, startDate: startDate.toISOString().split('T')[0], endDate: endDate.toISOString().split('T')[0] };
+        }
+
+        async function handleReservation(event) {
+            event.preventDefault();
+            const form = document.getElementById("reservation-form");
+            const datesInput = document.getElementById("dates").value;
+            const name = document.getElementById("name").value;
+            const email = document.getElementById("email").value;
+
+            if (!datesInput.includes(" to ")) {
+                alert("Please select a valid date range.");
+                return;
+            }
+
+            const [startDate, endDate] = datesInput.split(" to ");
+            const { totalCost, nights } = calculateTotal([new Date(startDate), new Date(endDate)]);
+
+            try {
+                const response = await fetch('http://localhost:3000/reserve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ startDate, endDate, name, email })
+                });
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(`Reservation Created:\n\nName: ${name}\nEmail: ${email}\nDates: ${datesInput}\nTotal Cost: $${totalCost} for ${nights} night${nights > 1 ? 's' : ''}\n\nPlease complete payment using this link: ${result.paymentLink}\nOnce payment is received, I'll confirm your reservation and block the dates.`);
+                    // Store reservation ID for manual confirmation
+                    localStorage.setItem('reservationId', result.id);
+                } else {
+                    alert(result.error);
+                }
+            } catch (error) {
+                console.error('Error creating reservation:', error);
+                alert('Failed to create reservation.');
+            }
+
+            // Reset the form
+            form.reset();
+            document.getElementById("total-cost").innerText = "";
         }
     </script>
 </body>
