@@ -106,32 +106,10 @@
             minDate: "today",
             onChange: function(selectedDates) {
                 if (selectedDates.length === 2) {
-                    checkAvailability(selectedDates);
+                    calculateTotal(selectedDates);
                 }
             }
         });
-
-        async function checkAvailability(selectedDates) {
-            const startDate = selectedDates[0].toISOString().split('T')[0];
-            const endDate = selectedDates[1].toISOString().split('T')[0];
-
-            try {
-                const response = await fetch('http://localhost:3000/check-availability', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ startDate, endDate })
-                });
-                const result = await response.json();
-                if (result.available) {
-                    calculateTotal(selectedDates);
-                } else {
-                    document.getElementById("total-cost").innerText = "Dates are already booked.";
-                }
-            } catch (error) {
-                console.error('Error checking availability:', error);
-                document.getElementById("total-cost").innerText = "Error checking availability.";
-            }
-        }
 
         function calculateTotal(selectedDates) {
             const startDate = new Date(selectedDates[0]);
@@ -145,7 +123,7 @@
             return { totalCost, nights, startDate: startDate.toISOString().split('T')[0], endDate: endDate.toISOString().split('T')[0] };
         }
 
-        async function handleReservation(event) {
+        function handleReservation(event) {
             event.preventDefault();
             const form = document.getElementById("reservation-form");
             const datesInput = document.getElementById("dates").value;
@@ -160,25 +138,25 @@
             const [startDate, endDate] = datesInput.split(" to ");
             const { totalCost, nights } = calculateTotal([new Date(startDate), new Date(endDate)]);
 
-            try {
-                const response = await fetch('http://localhost:3000/reserve', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ startDate, endDate, name, email })
-                });
-                const result = await response.json();
+            // Prepare the email body
+            const subject = encodeURIComponent("Camper Reservation Request");
+            const body = encodeURIComponent(
+                `Reservation Request:\n\n` +
+                `Name: ${name}\n` +
+                `Email: ${email}\n` +
+                `Dates: ${datesInput}\n` +
+                `Total Cost: $${totalCost} for ${nights} night${nights > 1 ? 's' : ''}\n\n` +
+                `Please confirm availability and reply with payment instructions.`
+            );
 
-                if (response.ok) {
-                    alert(`Reservation Created:\n\nName: ${name}\nEmail: ${email}\nDates: ${datesInput}\nTotal Cost: $${totalCost} for ${nights} night${nights > 1 ? 's' : ''}\n\nPlease complete payment using this link: ${result.paymentLink}\nOnce payment is received, I'll confirm your reservation and block the dates.`);
-                    // Store reservation ID for manual confirmation
-                    localStorage.setItem('reservationId', result.id);
-                } else {
-                    alert(result.error);
-                }
-            } catch (error) {
-                console.error('Error creating reservation:', error);
-                alert('Failed to create reservation.');
-            }
+            // Replace 'eddie@example.com' with your actual email address
+            const mailtoLink = `mailto:christoffersent@gmail.com?subject=${subject}&body=${body}`;
+            
+            // Open the user's email client
+            window.location.href = mailtoLink;
+
+            // Show a message to the user
+            alert("An email has been prepared with your reservation details. Please send it to complete your request. After I confirm availability, I'll send you payment instructions via Cash App ($Christoffersent) or a Facebook money request.");
 
             // Reset the form
             form.reset();
