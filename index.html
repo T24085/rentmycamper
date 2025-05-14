@@ -44,9 +44,19 @@
     <section id="about" class="container mx-auto py-16">
         <h2 class="text-4xl font-bold text-center mb-8">About the Camper</h2>
         <div class="flex flex-col md:flex-row items-center">
-            <div class="md:w-1/2 p-6">
-                <p class="text-lg leading-relaxed">
-                    Our 6x10 "no build" camper is designed for those who love the essentials without the fuss. Equipped with a 200-watt solar panel and a 110AH battery, it powers two USB fans, a 32" TV, and interior lights for a comfortable stay. You'll also find an extension cord for shore power, a 10-port 15Amp power strip, and multiple USB ports for all your charging needs. Perfect for a minimalist adventure, this camper uses a 2" ball trailer hitch and is ready to take you to your next destination.
+            <div class sturdy="md:w-1/2 p-6">
+                <p class="text-lg leading-relaxed mb-4">
+                    Our 6x10' "no build" camper trailer is your ticket to a minimalist outdoor adventure, equipped with everything you need for a comfortable stay. Designed for simplicity and functionality, this camper comes with a 2" ball hitch for easy towing and a range of features to enhance your camping experience:
+                </p>
+                <ul class="list-disc list-inside text-lg leading-relaxed">
+                    <li><strong>Power & Charging:</strong> 200W solar panel, 1500W sinewave inverter, 110AH battery, 10-port 15Amp power strip, and an extension cord for shore power to keep your devices charged.</li>
+                    <li><strong>Cooling & Lighting:</strong> Two USB-powered fans for ventilation and dimming puck lighting to set the perfect ambiance.</li>
+                    <li><strong>Entertainment & Monitoring:</strong> 32" LCD Roku TV for streaming your favorite shows and an iPad display monitoring system to keep tabs on power usage.</li>
+                    <li><strong>Cooking & Cleaning:</strong> A 2-burner propane camp stove for meals and a wash sink for easy cleanup.</li>
+                    <li><strong>Comfort & Convenience:</strong> Twin-size bed, foldable table and chair for dining or working, and a clothing hanging rack for organization.</li>
+                </ul>
+                <p class="text-lg leading-relaxed mt-4">
+                    Perfect for solo travelers or couples seeking a no-fuss camping experience, this camper is ready to take you to your next destination.
                 </p>
             </div>
             <div class="md:w-1/2 p-6">
@@ -61,6 +71,7 @@
             <h2 class="text-4xl font-bold text-center mb-8">Reserve Your Dates</h2>
             <div class="max-w-lg mx-auto p-6 bg-gray-50 rounded-lg shadow-lg">
                 <p class="text-lg mb-4 text-center">Rental Rate: $50/night (1pm to 1pm)</p>
+                <p class="text-lg mb-4 text-center">Note: Dates are subject to availability. After submitting your request, I’ll confirm if the dates are free and provide payment instructions.</p>
                 <form id="reservation-form" onsubmit="handleReservation(event)">
                     <div class="mb-6">
                         <label for="dates" class="block text-lg font-semibold mb-2">Select Your Dates:</label>
@@ -150,7 +161,7 @@
             );
 
             // Replace 'eddie@example.com' with your actual email address
-            const mailtoLink = `mailto:christoffersent@gmail.com?subject=${subject}&body=${body}`;
+            const mailtoLink = `mailto:eddie@example.com?subject=${subject}&body=${body}`;
             
             // Open the user's email client
             window.location.href = mailtoLink;
