@@ -44,7 +44,7 @@
     <section id="about" class="container mx-auto py-16">
         <h2 class="text-4xl font-bold text-center mb-8">About the Camper</h2>
         <div class="flex flex-col md:flex-row items-center">
-            <div class sturdy="md:w-1/2 p-6">
+            <div class="md:w-1/2 p-6">
                 <p class="text-lg leading-relaxed mb-4">
                     Our 6x10' "no build" camper trailer is your ticket to a minimalist outdoor adventure, equipped with everything you need for a comfortable stay. Designed for simplicity and functionality, this camper comes with a 2" ball hitch for easy towing and a range of features to enhance your camping experience:
                 </p>
@@ -89,6 +89,15 @@
                     <button type="submit" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">Calculate & Reserve</button>
                 </form>
             </div>
+        </div>
+    </section>
+
+    <!-- Download Release Form Section -->
+    <section id="download-form" class="bg-gray-100 py-8">
+        <div class="container mx-auto text-center">
+            <h2 class="text-3xl font-bold mb-4">Download Release Form</h2>
+            <p class="text-lg mb-6">Before your rental, please download and review our release form. You'll need to sign this form to confirm your reservation.</p>
+            <a href="https://drive.google.com/file/d/15mpqCprBOgU-xU0gcewsHl3dDp56K4NW/view?usp=drive_link" target="_blank" class="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">Download Release Form</a>
         </div>
     </section>
 
@@ -160,8 +169,8 @@
                 `Please confirm availability and reply with payment instructions.`
             );
 
-            // Replace 'christoffersent@gmail.com' with your actual email address
-            const mailtoLink = `mailto:christoffersent@gmail.com?subject=${subject}&body=${body}`;
+            // Replace 'eddie@example.com' with your actual email address
+            const mailtoLink = `mailto:eddie@example.com?subject=${subject}&body=${body}`;
             
             // Open the user's email client
             window.location.href = mailtoLink;
