@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rent My Camper</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -15,6 +15,24 @@
             background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('camper.PNG');
             background-size: cover;
             background-position: center;
+        }
+        #calendar {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .fc-daygrid-day-number {
+            color: #1f2937;
+        }
+        .fc-daygrid-day.fc-day-disabled {
+            background: #f3f4f6;
+            opacity: 0.5;
+        }
+        .fc-event {
+            background-color: #dc2626;
+            border-color: #dc2626;
+            color: white;
+            font-size: 0.85em;
         }
     </style>
 </head>
@@ -69,13 +87,14 @@
     <section id="reserve" class="bg-white py-16">
         <div class="container mx-auto">
             <h2 class="text-4xl font-bold text-center mb-8">Reserve Your Dates</h2>
-            <div class="max-w-lg mx-auto p-6 bg-gray-50 rounded-lg shadow-lg">
+            <div class="max-w-4xl mx-auto p-6 bg-gray-50 rounded-lg shadow-lg">
                 <p class="text-lg mb-4 text-center">Rental Rate: $50/night (1pm to 1pm)</p>
                 <p class="text-lg mb-4 text-center">Note: Dates are subject to availability. After submitting your request, I’ll confirm if the dates are free and provide payment instructions.</p>
+                <div id="calendar" class="mb-6"></div>
                 <form id="reservation-form" onsubmit="handleReservation(event)">
                     <div class="mb-6">
-                        <label for="dates" class="block text-lg font-semibold mb-2">Select Your Dates:</label>
-                        <input type="text" id="dates" name="dates" class="w-full p-3 border rounded-lg" placeholder="Pick your dates" required>
+                        <label for="dates" class="block text-lg font-semibold mb-2">Selected Dates:</label>
+                        <input type="text" id="dates" name="dates" class="w-full p-3 border rounded-lg" placeholder="Select dates on the calendar" readonly required>
                     </div>
                     <div class="mb-6">
                         <label for="name" class="block text-lg font-semibold mb-2">Your Name:</label>
@@ -119,69 +138,119 @@
     </footer>
 
     <script>
-        // Initialize Flatpickr for date range selection
-        flatpickr("#dates", {
-            mode: "range",
-            dateFormat: "Y-m-d",
-            minDate: "today",
-            onChange: function(selectedDates) {
-                if (selectedDates.length === 2) {
-                    calculateTotal(selectedDates);
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendar');
+            let selectedRange = null;
+
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                selectable: true,
+                selectMirror: true,
+                select: function(info) {
+                    selectedRange = {
+                        start: info.start,
+                        end: info.end
+                    };
+                    updateDateInput();
+                    calculateTotal([selectedRange.start, selectedRange.end]);
+                },
+                unselect: function() {
+                    selectedRange = null;
+                    document.getElementById('dates').value = '';
+                    document.getElementById('total-cost').innerText = '';
+                },
+                events: [
+                    // Example booked dates (static for now)
+                    {
+                        title: 'Booked',
+                        start: '2025-07-15',
+                        end: '2025-07-18',
+                        allDay: true
+                    },
+                    {
+                        title: 'Booked',
+                        start: '2025-07-25',
+                        end: '2025-07-27',
+                        allDay: true
+                    }
+                ],
+                eventOverlap: false,
+                selectOverlap: false,
+                validRange: {
+                    start: new Date()
+                }
+            });
+
+            calendar.render();
+
+            function updateDateInput() {
+                if (selectedRange) {
+                    const startDate = selectedRange.start.toISOString().split('T')[0];
+                    const endDate = new Date(selectedRange.end.getTime() - 86400000).toISOString().split('T')[0];
+                    document.getElementById('dates').value = `${startDate} to ${endDate}`;
                 }
             }
-        });
 
-        function calculateTotal(selectedDates) {
-            const startDate = new Date(selectedDates[0]);
-            const endDate = new Date(selectedDates[1]);
-            const timeDiff = endDate - startDate;
-            const nights = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-            const ratePerNight = 50;
-            const totalCost = nights * ratePerNight;
+            function calculateTotal(selectedDates) {
+                if (selectedDates[0] && selectedDates[1]) {
+                    const startDate = new Date(selectedDates[0]);
+                    const endDate = new Date(selectedDates[1]);
+                    const timeDiff = endDate - startDate;
+                    const nights = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                    const ratePerNight = 50;
+                    const totalCost = nights * ratePerNight;
 
-            document.getElementById("total-cost").innerText = `Total Cost: $${totalCost} for ${nights} night${nights > 1 ? 's' : ''}`;
-            return { totalCost, nights, startDate: startDate.toISOString().split('T')[0], endDate: endDate.toISOString().split('T')[0] };
-        }
-
-        function handleReservation(event) {
-            event.preventDefault();
-            const form = document.getElementById("reservation-form");
-            const datesInput = document.getElementById("dates").value;
-            const name = document.getElementById("name").value;
-            const email = document.getElementById("email").value;
-
-            if (!datesInput.includes(" to ")) {
-                alert("Please select a valid date range.");
-                return;
+                    document.getElementById('total-cost').innerText = `Total Cost: $${totalCost} for ${nights} night${nights > 1 ? 's' : ''}`;
+                    return { totalCost, nights, startDate: startDate.toISOString().split('T')[0], endDate: endDate.toISOString().split('T')[0] };
+                }
+                return null;
             }
 
-            const [startDate, endDate] = datesInput.split(" to ");
-            const { totalCost, nights } = calculateTotal([new Date(startDate), new Date(endDate)]);
+            window.handleReservation = function(event) {
+                event.preventDefault();
+                const form = document.getElementById('reservation-form');
+                const datesInput = document.getElementById('dates').value;
+                const name = document.getElementById('name').value;
+                const email = document.getElementById('email').value;
 
-            // Prepare the email body
-            const subject = encodeURIComponent("Camper Reservation Request");
-            const body = encodeURIComponent(
-                `Reservation Request:\n\n` +
-                `Name: ${name}\n` +
-                `Email: ${email}\n` +
-                `Dates: ${datesInput}\n` +
-                `Total Cost: $${totalCost} for ${nights} night${nights > 1 ? 's' : ''}\n\n` +
-                `Please confirm availability and reply with payment instructions.`
-            );
+                if (!datesInput.includes(' to ')) {
+                    alert('Please select a valid date range on the calendar.');
+                    return;
+                }
 
-            // Updated with your email address
-            const mailtoLink = `mailto:christoffersent@gmail.com?subject=${subject}&body=${body}`;
-            
-            // Open the user's email client
-            window.location.href = mailtoLink;
+                const [startDate, endDate] = datesInput.split(' to ');
+                const costData = calculateTotal([new Date(startDate), new Date(endDate)]);
 
-            // Show a message to the user
-            alert("An email has been prepared with your reservation details. Please send it to complete your request. After I confirm availability, I'll send you payment instructions via Cash App ($Christoffersent) or a Facebook money request.");
+                if (!costData) {
+                    alert('Error calculating reservation details.');
+                    return;
+                }
 
-            // Reset the form
-            form.reset();
-            document.getElementById("total-cost").innerText = "";
-        }
+                const { totalCost, nights } = costData;
+
+                // Prepare the email body
+                const subject = encodeURIComponent('Camper Reservation Request');
+                const body = encodeURIComponent(
+                    `Reservation Request:\n\n` +
+                    `Name: ${name}\n` +
+                    `Email: ${email}\n` +
+                    `Dates: ${datesInput}\n` +
+                    `Total Cost: $${totalCost} for ${nights} night${nights > 1 ? 's' : ''}\n\n` +
+                    `Please confirm availability and reply with payment instructions.`
+                );
+
+                const mailtoLink = `mailto:christoffersent@gmail.com?subject=${subject}&body=${body}`;
+                
+                window.location.href = mailtoLink;
+
+                alert('An email has been prepared with your reservation details. Please send it to complete your request. After I confirm availability, I’ll send you payment instructions via Cash App ($Christoffersent) or a Facebook money request.');
+
+                form.reset();
+                document.getElementById('total-cost').innerText = '';
+                selectedRange = null;
+                calendar.unselect();
+            };
+        });
     </script>
 </body>
 </html>
