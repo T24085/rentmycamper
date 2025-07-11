@@ -10,11 +10,11 @@
     <!-- Firebase SDK (modular) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-        window.firebase = { initializeApp, getDatabase, ref, push, onValue }; // Expose for non-module script
+        import { getDatabase, ref, push, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+        window.firebase = { initializeApp, getDatabase, ref, push, onValue, set }; // Expose for non-module script
     </script>
-    <!-- EmailJS SDK -->
-    <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+    <!-- EmailJS SDK v4 -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -150,8 +150,8 @@
     </footer>
 
     <script>
-        // Initialize EmailJS with your user ID (replace 'YOUR_EMAILJS_USER_ID' with your actual EmailJS user ID)
-        emailjs.init('YOUR_EMAILJS_USER_ID');
+        // Initialize EmailJS with your public key (replace 'YOUR_PUBLIC_KEY' with your actual EmailJS public key from the dashboard)
+        emailjs.init({ publicKey: 'YOUR_PUBLIC_KEY' });
 
         document.addEventListener('DOMContentLoaded', function() {
             const firebaseConfig = {
@@ -172,7 +172,7 @@
 
             const calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
-                initialDate: '2025-07-11', // Set to current date July 11, 2025
+                initialDate: '2025-07-11',
                 selectable: true,
                 selectMirror: true,
                 selectLongPressDelay: 100,
@@ -183,7 +183,6 @@
                     };
                     updateDateInput();
                     calculateTotal([selectedRange.start, selectedRange.end]);
-                    // Highlight selected dates
                     calendar.getEvents().forEach(event => {
                         if (event.classNames.includes('fc-selected-range')) event.remove();
                     });
@@ -249,25 +248,26 @@
                     const totalCost = nights * ratePerNight;
 
                     document.getElementById('total-cost').innerText = `Total Cost: $${totalCost} for ${nights} night${nights > 1 ? 's' : ''}`;
-                    return { totalCost, nights, startDate: startDate.toISOString().split('T')[0], endDate: endDate.toISOString().split('T')[0] };
+                    return { totalCost, nights, startDate: selectedDates[0], endDate: selectedDates[1] };
                 }
                 return null;
             }
 
-            window.handleReservation = function(event) {
+            window.handleReservation = async function(event) {
                 event.preventDefault();
                 const form = document.getElementById('reservation-form');
-                const datesInput = document.getElementById('dates').value;
+                let datesInput = document.getElementById('dates').value.trim();
                 const name = document.getElementById('name').value;
                 const email = document.getElementById('email').value;
 
-                if (!datesInput.includes(' to ')) {
+                const dateParts = datesInput.split('to').map(part => part.trim());
+                if (dateParts.length !== 2) {
                     alert('Please select a valid date range on the calendar.');
                     return;
                 }
+                const [startDate, endDate] = dateParts;
 
-                const [startDate, endDate] = datesInput.split(' to ');
-                const costData = calculateTotal([new Date(startDate), new Date(endDate)]);
+                const costData = calculateTotal([startDate, endDate]);
 
                 if (!costData || costData.nights < 1) {
                     alert('Please select a valid date range (at least 1 night).');
@@ -276,19 +276,21 @@
 
                 const { totalCost, nights } = costData;
 
-                // Add booking to Firebase (pending confirmation)
-                const newBookingRef = firebase.ref(database, 'bookings');
-                const newBooking = firebase.push(newBookingRef);
-                firebase.set(newBooking, {
-                    title: 'Booked (Pending)',
-                    start: startDate,
-                    end: endDate,
-                    name: name,
-                    email: email,
-                    totalCost: totalCost,
-                    nights: nights,
-                    status: 'pending'
-                }).then(() => {
+                try {
+                    // Add booking to Firebase (pending confirmation)
+                    const bookingsRef = firebase.ref(database, 'bookings');
+                    const newBooking = await firebase.push(bookingsRef);
+                    await firebase.set(newBooking, {
+                        title: 'Booked (Pending)',
+                        start: startDate,
+                        end: endDate,
+                        name: name,
+                        email: email,
+                        totalCost: totalCost,
+                        nights: nights,
+                        status: 'pending'
+                    });
+
                     // Refresh calendar to show new booking
                     calendar.refetchEvents();
 
@@ -312,9 +314,9 @@
                     calendar.getEvents().forEach(event => {
                         if (event.classNames.includes('fc-selected-range')) event.remove();
                     });
-                }).catch(error => {
+                } catch (error) {
                     alert('Failed to book: ' + error.message);
-                });
+                }
             };
         });
     </script>
