@@ -7,14 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
-    <!-- Firebase SDK (modular) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getDatabase, ref, push, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-        window.firebase = { initializeApp, getDatabase, ref, push, onValue, set }; // Expose for non-module script
-    </script>
-    <!-- EmailJS SDK v4 -->
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -23,28 +15,6 @@
             background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('camper.PNG');
             background-size: cover;
             background-position: center;
-        }
-        #calendar {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .fc-daygrid-day-number {
-            color: #1f2937;
-        }
-        .fc-day-disabled {
-            background-color: #f3f4f6;
-            opacity: 0.5;
-        }
-        .fc-event {
-            background-color: #dc2626;
-            border-color: #dc2626;
-            color: white;
-            font-size: 0.85em;
-        }
-        .fc-daygrid-day.fc-day-selected {
-            background-color: #bfdbfe;
-            opacity: 0.7;
         }
     </style>
 </head>
@@ -101,24 +71,13 @@
             <h2 class="text-4xl font-bold text-center mb-8">Reserve Your Dates</h2>
             <div class="max-w-4xl mx-auto p-6 bg-gray-50 rounded-lg shadow-lg">
                 <p class="text-lg mb-4 text-center">Rental Rate: $50/night (1pm check-in to 1pm check-out)</p>
-                <p class="text-lg mb-4 text-center">Note: Click and drag on the calendar to select your check-in to check-out dates (the range represents check-in day to check-out day). Dates are subject to availability. After submitting your request, it will be booked pending confirmation, and I'll send you payment instructions.</p>
-                <div id="calendar" class="mb-6"></div>
-                <form id="reservation-form" onsubmit="handleReservation(event)">
-                    <div class="mb-6">
-                        <label for="dates" class="block text-lg font-semibold mb-2">Selected Dates (Check-in to Check-out):</label>
-                        <input type="text" id="dates" name="dates" class="w-full p-3 border rounded-lg" placeholder="Select dates on the calendar" readonly required>
-                    </div>
-                    <div class="mb-6">
-                        <label for="name" class="block text-lg font-semibold mb-2">Your Name:</label>
-                        <input type="text" id="name" name="name" class="w-full p-3 border rounded-lg" placeholder="Enter your name" required>
-                    </div>
-                    <div class="mb-6">
-                        <label for="email" class="block text-lg font-semibold mb-2">Your Email:</label>
-                        <input type="email" id="email" name="email" class="w-full p-3 border rounded-lg" placeholder="Enter your email" required>
-                    </div>
-                    <div id="total-cost" class="text-lg font-semibold mb-4 text-center"></div>
-                    <button type="submit" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">Reserve Now</button>
-                </form>
+                <p class="text-lg mb-4 text-center">Check availability below and submit your reservation request. I'll confirm and send payment instructions via email.</p>
+                <!-- Embedded Google Calendar for Availability -->
+                <h3 class="text-2xl font-bold text-center mb-4">Availability Calendar</h3>
+                <iframe src="https://calendar.google.com/calendar/embed?src=1f492ad6177964c945a65413469cef4de89a8a070f2bbdf46cd01e51d6601e49%40group.calendar.google.com&ctz=America%2FChicago" style="border: 0" width="100%" height="400" frameborder="0" scrolling="no"></iframe>
+                <!-- Embedded Google Form for Reservations -->
+                <h3 class="text-2xl font-bold text-center mb-4 mt-8">Reservation Request Form</h3>
+                <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSfkE34Ddqy203zPVzcTKx411wDAjRerZeSKgHb5eEJoFH-IIA/viewform?embedded=true" width="100%" height="985" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
             </div>
         </div>
     </section>
@@ -148,178 +107,5 @@
             <p>© 2025 Rent My Camper. All rights reserved.</p>
         </div>
     </footer>
-
-    <script>
-        // Initialize EmailJS with your public key (replace 'YOUR_PUBLIC_KEY' with your actual EmailJS public key from the dashboard)
-        emailjs.init({ publicKey: 'YOUR_PUBLIC_KEY' });
-
-        document.addEventListener('DOMContentLoaded', function() {
-            const firebaseConfig = {
-                apiKey: "AIzaSyC-Y-0iznWL8aFG4bsDMqW2jEaxahcuhV0",
-                authDomain: "rentmycamper-8aea1.firebaseapp.com",
-                projectId: "rentmycamper-8aea1",
-                storageBucket: "rentmycamper-8aea1.firebasestorage.app",
-                messagingSenderId: "950561140093",
-                appId: "1:950561140093:web:f038f0c57240815e2df014",
-                measurementId: "G-JDRVCSDE25"
-            };
-
-            const app = firebase.initializeApp(firebaseConfig);
-            const database = firebase.getDatabase(app);
-
-            const calendarEl = document.getElementById('calendar');
-            let selectedRange = null;
-
-            const calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                initialDate: '2025-07-11',
-                selectable: true,
-                selectMirror: true,
-                selectLongPressDelay: 100,
-                select: function(info) {
-                    selectedRange = {
-                        start: info.start,
-                        end: info.end
-                    };
-                    updateDateInput();
-                    calculateTotal([selectedRange.start, selectedRange.end]);
-                    calendar.getEvents().forEach(event => {
-                        if (event.classNames.includes('fc-selected-range')) event.remove();
-                    });
-                    calendar.addEvent({
-                        start: info.start,
-                        end: info.end,
-                        display: 'background',
-                        classNames: ['fc-selected-range'],
-                        allDay: true
-                    });
-                },
-                unselect: function() {
-                    selectedRange = null;
-                    document.getElementById('dates').value = '';
-                    document.getElementById('total-cost').innerText = '';
-                    calendar.getEvents().forEach(event => {
-                        if (event.classNames.includes('fc-selected-range')) event.remove();
-                    });
-                },
-                events: function(fetchInfo, successCallback, failureCallback) {
-                    const dbRef = firebase.ref(database, 'bookings');
-                    firebase.onValue(dbRef, (snapshot) => {
-                        const events = [];
-                        snapshot.forEach((childSnapshot) => {
-                            const booking = childSnapshot.val();
-                            events.push({
-                                title: 'Booked',
-                                start: booking.start,
-                                end: booking.end,
-                                allDay: true
-                            });
-                        });
-                        successCallback(events);
-                    }, {
-                        onlyOnce: true
-                    });
-                },
-                eventOverlap: false,
-                selectOverlap: false,
-                validRange: {
-                    start: new Date()
-                }
-            });
-
-            calendar.render();
-
-            function updateDateInput() {
-                if (selectedRange) {
-                    const startDate = selectedRange.start.toISOString().split('T')[0];
-                    const endDate = selectedRange.end.toISOString().split('T')[0];
-                    document.getElementById('dates').value = `${startDate} to ${endDate}`;
-                }
-            }
-
-            function calculateTotal(selectedDates) {
-                if (selectedDates[0] && selectedDates[1]) {
-                    const startDate = new Date(selectedDates[0]);
-                    const endDate = new Date(selectedDates[1]);
-                    const timeDiff = endDate - startDate;
-                    const nights = timeDiff / (1000 * 60 * 60 * 24);
-                    if (nights < 1) return null;
-                    const ratePerNight = 50;
-                    const totalCost = nights * ratePerNight;
-
-                    document.getElementById('total-cost').innerText = `Total Cost: $${totalCost} for ${nights} night${nights > 1 ? 's' : ''}`;
-                    return { totalCost, nights, startDate: selectedDates[0], endDate: selectedDates[1] };
-                }
-                return null;
-            }
-
-            window.handleReservation = async function(event) {
-                event.preventDefault();
-                const form = document.getElementById('reservation-form');
-                let datesInput = document.getElementById('dates').value.trim();
-                const name = document.getElementById('name').value;
-                const email = document.getElementById('email').value;
-
-                // Robust split on ' to ' with optional spaces
-                const dateParts = datesInput.split(/\s*to\s*/);
-                if (dateParts.length !== 2 || !dateParts[0] || !dateParts[1]) {
-                    alert('Please select a valid date range on the calendar.');
-                    return;
-                }
-                const [startDate, endDate] = dateParts;
-
-                const costData = calculateTotal([startDate, endDate]);
-
-                if (!costData || costData.nights < 1) {
-                    alert('Please select a valid date range (at least 1 night).');
-                    return;
-                }
-
-                const { totalCost, nights } = costData;
-
-                try {
-                    // Add booking to Firebase (pending confirmation)
-                    const bookingsRef = firebase.ref(database, 'bookings');
-                    const newBooking = await firebase.push(bookingsRef);
-                    await firebase.set(newBooking, {
-                        title: 'Booked (Pending)',
-                        start: startDate,
-                        end: endDate,
-                        name: name,
-                        email: email,
-                        totalCost: totalCost,
-                        nights: nights,
-                        status: 'pending'
-                    });
-
-                    // Refresh calendar to show new booking
-                    calendar.refetchEvents();
-
-                    // Send email using EmailJS
-                    emailjs.send('YOUR_EMAILJS_SERVICE_ID', 'YOUR_EMAILJS_TEMPLATE_ID', {
-                        name: name,
-                        email: email,
-                        dates: datesInput,
-                        total_cost: totalCost,
-                        nights: nights
-                    }).then(() => {
-                        alert('Reservation submitted successfully! An email has been sent for confirmation. Payment instructions will be provided soon.');
-                    }, (error) => {
-                        alert('Failed to send email: ' + JSON.stringify(error));
-                    });
-
-                    form.reset();
-                    document.getElementById('total-cost').innerText = '';
-                    selectedRange = null;
-                    calendar.unselect();
-                    calendar.getEvents().forEach(event => {
-                        if (event.classNames.includes('fc-selected-range')) event.remove();
-                    });
-                } catch (error) {
-                    alert('Failed to book: ' + error.message);
-                }
-            };
-        });
-    </script>
 </body>
 </html>
