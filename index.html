@@ -260,8 +260,9 @@
                 const name = document.getElementById('name').value;
                 const email = document.getElementById('email').value;
 
-                const dateParts = datesInput.split('to').map(part => part.trim());
-                if (dateParts.length !== 2) {
+                // Robust split on ' to ' with optional spaces
+                const dateParts = datesInput.split(/\s*to\s*/);
+                if (dateParts.length !== 2 || !dateParts[0] || !dateParts[1]) {
                     alert('Please select a valid date range on the calendar.');
                     return;
                 }
