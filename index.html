@@ -24,8 +24,8 @@
         .fc-daygrid-day-number {
             color: #1f2937;
         }
-        .fc-daygrid-day.fc-day-disabled {
-            background: #f3f4f6;
+        .fc-day-disabled {
+            background-color: #f3f4f6;
             opacity: 0.5;
         }
         .fc-event {
@@ -92,12 +92,12 @@
         <div class="container mx-auto">
             <h2 class="text-4xl font-bold text-center mb-8">Reserve Your Dates</h2>
             <div class="max-w-4xl mx-auto p-6 bg-gray-50 rounded-lg shadow-lg">
-                <p class="text-lg mb-4 text-center">Rental Rate: $50/night (1pm to 1pm)</p>
-                <p class="text-lg mb-4 text-center">Note: Click and drag on the calendar to select your date range. Dates are subject to availability. After submitting your request, I’ll confirm if the dates are free and provide payment instructions.</p>
+                <p class="text-lg mb-4 text-center">Rental Rate: $50/night (1pm check-in to 1pm check-out)</p>
+                <p class="text-lg mb-4 text-center">Note: Click and drag on the calendar to select your check-in to check-out dates (the range represents check-in day to check-out day). Dates are subject to availability. After submitting your request, I’ll confirm if the dates are free and provide payment instructions.</p>
                 <div id="calendar" class="mb-6"></div>
                 <form id="reservation-form" onsubmit="handleReservation(event)">
                     <div class="mb-6">
-                        <label for="dates" class="block text-lg font-semibold mb-2">Selected Dates:</label>
+                        <label for="dates" class="block text-lg font-semibold mb-2">Selected Dates (Check-in to Check-out):</label>
                         <input type="text" id="dates" name="dates" class="w-full p-3 border rounded-lg" placeholder="Select dates on the calendar" readonly required>
                     </div>
                     <div class="mb-6">
@@ -204,7 +204,7 @@
             function updateDateInput() {
                 if (selectedRange) {
                     const startDate = selectedRange.start.toISOString().split('T')[0];
-                    const endDate = new Date(selectedRange.end.getTime() - 86400000).toISOString().split('T')[0];
+                    const endDate = selectedRange.end.toISOString().split('T')[0];
                     document.getElementById('dates').value = `${startDate} to ${endDate}`;
                 }
             }
@@ -214,7 +214,8 @@
                     const startDate = new Date(selectedDates[0]);
                     const endDate = new Date(selectedDates[1]);
                     const timeDiff = endDate - startDate;
-                    const nights = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+                    const nights = timeDiff / (1000 * 60 * 60 * 24);
+                    if (nights < 1) return null;
                     const ratePerNight = 50;
                     const totalCost = nights * ratePerNight;
 
@@ -239,8 +240,8 @@
                 const [startDate, endDate] = datesInput.split(' to ');
                 const costData = calculateTotal([new Date(startDate), new Date(endDate)]);
 
-                if (!costData) {
-                    alert('Error calculating reservation details.');
+                if (!costData || costData.nights < 1) {
+                    alert('Please select a valid date range (at least 1 night).');
                     return;
                 }
 
@@ -251,7 +252,7 @@
                     `Reservation Request:\n\n` +
                     `Name: ${name}\n` +
                     `Email: ${email}\n` +
-                    `Dates: ${datesInput}\n` +
+                    `Dates: ${datesInput} (check-in to check-out)\n` +
                     `Total Cost: $${totalCost} for ${nights} night${nights > 1 ? 's' : ''}\n\n` +
                     `Please confirm availability and reply with payment instructions.`
                 );
