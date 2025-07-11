@@ -7,9 +7,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css">
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
+    <!-- Firebase SDK (modular) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+        window.firebase = { initializeApp, getDatabase, ref, push, onValue }; // Expose for non-module script
+    </script>
     <!-- EmailJS SDK -->
     <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
     <style>
@@ -150,27 +153,20 @@
         // Initialize EmailJS with your user ID (replace 'YOUR_EMAILJS_USER_ID' with your actual EmailJS user ID)
         emailjs.init('YOUR_EMAILJS_USER_ID');
 
-        // Firebase configuration (replace with your actual Firebase config)
-const firebaseConfig = {
-  apiKey: "AIzaSyC-Y-0iznWL8aFG4bsDMqW2jEaxahcuhV0",
-  authDomain: "rentmycamper-8aea1.firebaseapp.com",
-  projectId: "rentmycamper-8aea1",
-  storageBucket: "rentmycamper-8aea1.firebasestorage.app",
-  messagingSenderId: "950561140093",
-  appId: "1:950561140093:web:f038f0c57240815e2df014",
-  measurementId: "G-JDRVCSDE25"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-        };
-
-        // Initialize Firebase
-        const app = firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-
         document.addEventListener('DOMContentLoaded', function() {
+            const firebaseConfig = {
+                apiKey: "AIzaSyC-Y-0iznWL8aFG4bsDMqW2jEaxahcuhV0",
+                authDomain: "rentmycamper-8aea1.firebaseapp.com",
+                projectId: "rentmycamper-8aea1",
+                storageBucket: "rentmycamper-8aea1.firebasestorage.app",
+                messagingSenderId: "950561140093",
+                appId: "1:950561140093:web:f038f0c57240815e2df014",
+                measurementId: "G-JDRVCSDE25"
+            };
+
+            const app = firebase.initializeApp(firebaseConfig);
+            const database = firebase.getDatabase(app);
+
             const calendarEl = document.getElementById('calendar');
             let selectedRange = null;
 
@@ -208,22 +204,22 @@ const analytics = getAnalytics(app);
                     });
                 },
                 events: function(fetchInfo, successCallback, failureCallback) {
-                    const ref = database.ref('bookings');
-                    ref.once('value')
-                        .then(snapshot => {
-                            const events = [];
-                            snapshot.forEach(child => {
-                                const booking = child.val();
-                                events.push({
-                                    title: 'Booked',
-                                    start: booking.start,
-                                    end: booking.end,
-                                    allDay: true
-                                });
+                    const dbRef = firebase.ref(database, 'bookings');
+                    firebase.onValue(dbRef, (snapshot) => {
+                        const events = [];
+                        snapshot.forEach((childSnapshot) => {
+                            const booking = childSnapshot.val();
+                            events.push({
+                                title: 'Booked',
+                                start: booking.start,
+                                end: booking.end,
+                                allDay: true
                             });
-                            successCallback(events);
-                        })
-                        .catch(err => failureCallback(err));
+                        });
+                        successCallback(events);
+                    }, {
+                        onlyOnce: true
+                    });
                 },
                 eventOverlap: false,
                 selectOverlap: false,
@@ -281,8 +277,9 @@ const analytics = getAnalytics(app);
                 const { totalCost, nights } = costData;
 
                 // Add booking to Firebase (pending confirmation)
-                const newBookingRef = database.ref('bookings').push();
-                newBookingRef.set({
+                const newBookingRef = firebase.ref(database, 'bookings');
+                const newBooking = firebase.push(newBookingRef);
+                firebase.set(newBooking, {
                     title: 'Booked (Pending)',
                     start: startDate,
                     end: endDate,
