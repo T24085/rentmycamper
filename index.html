@@ -72,6 +72,13 @@
             <div class="max-w-4xl mx-auto p-6 bg-gray-50 rounded-lg shadow-lg">
                 <p class="text-lg mb-4 text-center">Rental Rate: $50/night (1pm check-in to 1pm check-out)</p>
                 <p class="text-lg mb-4 text-center">Check availability below and submit your reservation request. I'll confirm and send payment instructions via email.</p>
+                <!-- Cost Calculator -->
+                <h3 class="text-2xl font-bold text-center mb-4">Cost Calculator</h3>
+                <div class="max-w-sm mx-auto mb-8">
+                    <label for="nights" class="block text-lg font-semibold mb-2">Number of Nights:</label>
+                    <input type="number" id="nights" min="1" value="1" class="w-full p-3 border rounded-lg mb-4">
+                    <div id="calculated-cost" class="text-lg font-semibold text-center"></div>
+                </div>
                 <!-- Embedded Google Calendar for Availability -->
                 <h3 class="text-2xl font-bold text-center mb-4">Availability Calendar</h3>
                 <iframe src="https://calendar.google.com/calendar/embed?src=1f492ad6177964c945a65413469cef4de89a8a070f2bbdf46cd01e51d6601e49%40group.calendar.google.com&ctz=America%2FChicago" style="border: 0" width="100%" height="400" frameborder="0" scrolling="no"></iframe>
@@ -107,5 +114,22 @@
             <p>© 2025 Rent My Camper. All rights reserved.</p>
         </div>
     </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const nightsInput = document.getElementById('nights');
+            const costDisplay = document.getElementById('calculated-cost');
+            const ratePerNight = 50;
+
+            function calculateCost() {
+                const nights = parseInt(nightsInput.value) || 0;
+                const totalCost = nights * ratePerNight;
+                costDisplay.innerText = nights > 0 ? `Total Cost: $${totalCost} for ${nights} night${nights > 1 ? 's' : ''}` : '';
+            }
+
+            nightsInput.addEventListener('input', calculateCost);
+            calculateCost(); // Initial calculation
+        });
+    </script>
 </body>
 </html>
